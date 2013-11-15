@@ -169,10 +169,6 @@ Controller.prototype.sync = function(self) {
   self.timer = setTimeout(function() { self.sync(self); }, self.params.pixelpusher.updatePeriod);
 };
 
-Controller.prototype.resync = function(self) {
-  if (self.timer) 
-  self.sync(self);
-};
 
 module.exports = PixelPusher;
 
