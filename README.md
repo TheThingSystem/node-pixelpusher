@@ -21,6 +21,7 @@ API
     var pp = new PixelPusher().on('discover', function(controller) {
       // inspect controller.params and controller.params.pixelpusher...
 
+      // every 1/2-second change the colors
       setInterval(function() { refresh(controller); }, 500);
     }).on('update', function(controller) {
       // inspect controller.params.pixelpusher...
@@ -35,7 +36,6 @@ API
     var refresh = function(controller) {
       var i, strips, x;
     
-      // every 1/4-second change the colors
       strips = [];
       strips[0] = { number: 0, data: new Buffer(3 * controller.params.pixelpusher.pixelsPerStrip) };
       strips[0].data.fill(0x00);
@@ -49,3 +49,25 @@ API
       controller.refresh(strips);
       n++;
     };
+
+
+### Formats
+
+    if (strip[x].flags & 0x1) {         // red, green blue, orange[3], white[3]
+
+      // indicates that the actual number of pixels is pixelsPerStrip/3,
+      // each pixel is encoded as 9 octets
+      //     first three octets are R, G, and B
+      //     next three octets is the orange value expressed as a 24-bit LE-encoded value
+      //     next three octets is the white  value expressed as a 24-bit LE-encoded value
+
+    } else if (strip[x].flags & 0x2) { // wide pixels
+
+      // indicates that the actual number of pixels is pixelsPerStrip/2,
+      // each pixel is encoded as 6 octets: R, G, and B (use writeUInt16LE for each)
+
+    } else {
+
+      // each pixel is encoded as three octets: R, G, and B
+
+    }
