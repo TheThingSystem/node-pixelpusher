@@ -112,47 +112,47 @@ var Controller = function(params) {
   self.lastUpdated = new Date().getTime();
   self.nextUpdate = self.lastUpdated + self.params.pixelpusher.updatePeriod;
 
-  self.messageID = 0;
+  self.sequenceNo = 0;
   self.messages = [];
   self.timer = null;
 };
 util.inherits(Controller, Emitter);
 
 Controller.prototype.refresh = function(strips) {
-  var i, message, m, n, offset, self;
+  var i, m, n, offset, packet, self;
 
   self = this;
 
-  message = null;
+  packet = null;
   for (i = 0; i < strips.length; ) {
-    if (message === null) {
+    if (packet === null) {
       n = strips.length - i;
       if (n > self.params.stripsPerPkt) n = self.params.stripsPerPkt;
       offset = 4;
       for (m = 0; m < n; m++) offset += 1 + strips[i + m].data.length;
-      message = new Buffer(offset);
-      message.fill(0x00);
+      packet = new Buffer(offset);
+      packet.fill(0x00);
 
       offset = 0;
-      message.writeUInt32LE(self.messageID, offset);
+      packet.writeUInt32LE(++self.sequenceNo, offset);
       offset += 4;
     }
-    message.writeUInt8(strips[i].number, offset++);
-    strips[i].data.copy(message, offset);
+    packet.writeUInt8(strips[i].number, offset++);
+    strips[i].data.copy(packet, offset);
     offset += strips[i].data.length;
 
     if ((++i % self.params.stripsPerPkt) === 0) {
-      self.messages.push(message);
-      message = null;
+      self.messages.push({ sequenceNo: self.sequenceNo, packet: packet });
+      packet = null;
     }
   }
-  if (!!message) self.messages.push(message);
+  if (!!packet) self.messages.push({ sequenceNo: self.sequenceNo, packet: packet });
 
   if ((self.timer === null) && (self.messages.length > 0)) self.sync(self);
 };
 
 Controller.prototype.sync = function(self) {
-  var message, now;
+  var message, now, packet;
 
   now = new Date().getTime();
   if (now < self.nextUpdate) {
@@ -162,7 +162,8 @@ Controller.prototype.sync = function(self) {
   self.timer = null;
 
   message = self.messages.shift();
-  self.params.socket.send(message, 0, message.length, self.params.pixelpusher.myPort, self.params.ipAddress);
+  packet = message.packet;
+  self.params.socket.send(packet, 0, packet.length, self.params.pixelpusher.myPort, self.params.ipAddress);
   self.nextUpdate = now + self.params.pixelpusher.updatePeriod;
   if (self.messages.length === 0) return;
 
