@@ -21,10 +21,12 @@ API
     var pp = new PixelPusher().on('discover', function(controller) {
       // inspect controller.params and controller.params.pixelpusher...
 
+      controller.on('update', function() {
+        // inspect controller.params.pixelpusher...
+      });
+
       // every 1/2-second change the colors
       setInterval(function() { refresh(controller); }, 500);
-    }).on('update', function(controller) {
-      // inspect controller.params.pixelpusher...
     }).on('error', function(err) {
       console.log('oops: ' + err.message);
     });

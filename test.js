@@ -4,6 +4,10 @@ var PixelPusher = require('./pixelpusher')
 new PixelPusher().on('discover', function(controller) {
   console.log('discovery: ' + JSON.stringify(controller.params.pixelpusher));
 
+  controller.on('update', function() {
+    console.log('update: ' + JSON.stringify(this.params.pixelpusher));
+  });
+
   var n = 0;
   setInterval(function() {
     var i, strips, x;
@@ -21,8 +25,6 @@ new PixelPusher().on('discover', function(controller) {
     controller.refresh(strips);
     n++;
   }, 100);
-}).on('update', function(controller) {
-  console.log('update: ' + JSON.stringify(controller.params.pixelpusher));
 }).on('error', function(err) {
   console.log('oops: ' + err.message);
 });
