@@ -24,21 +24,26 @@ var PixelPusher = function(options) {
   self.controllers = {};
 
   dgram.createSocket('udp4').on('message', function(message, rinfo) {
-    var cycleTime, mac, params;
+    var controller, cycleTime, mac, params;
 
     if (message.length < 48) return self.logger.debug('message too short (' + message.length + ' octets)', rinfo);
 
     mac = message.slice(0, 6).toString('hex').match(/.{2}/g).join(':');
     if (!!self.controllers[mac]) {
-      if (self.controllers[mac].params.deviceType !== 2) return;
+      controller = self.controllers[mac];
+      if (controller.params.deviceType !== 2) return;
 
       cycleTime = message.readUInt32LE(28) / 1000;
-      self.controllers[mac].params.pixelpusher.updatePeriod = cycleTime;
-      self.controllers[mac].params.pixelpusher.powerTotal = message.readUInt32LE(32);
-      self.controllers[mac].params.pixelpusher.deltaSequence = message.readUInt32LE(36);
-      self.controllers[mac].lastUpdated = new Date().getTime();
-      self.controllers[mac].nextUpdate = self.controllers[mac].lastUpdated + cycleTime;
-      return self.emit('update', self.controllers[mac]);
+      controller.params.pixelpusher.updatePeriod = cycleTime;
+      controller.params.pixelpusher.powerTotal = message.readUInt32LE(32);
+      controller.params.pixelpusher.deltaSequence = message.readUInt32LE(36);
+      controller.lastUpdated = new Date().getTime();
+      controller.nextUpdate = controller.lastUpdated + cycleTime;
+      if (controller.timer) {
+        clearTimeout(controller.timer);
+        controller.sync(controller);
+      }
+      return self.emit('update', controller);
     }
 
     params = { macAddress   : mac
@@ -164,6 +169,10 @@ Controller.prototype.sync = function(self) {
   self.timer = setTimeout(function() { self.sync(self); }, self.params.pixelpusher.updatePeriod);
 };
 
+Controller.prototype.resync = function(self) {
+  if (self.timer) 
+  self.sync(self);
+};
 
 module.exports = PixelPusher;
 
