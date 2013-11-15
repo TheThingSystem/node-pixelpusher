@@ -75,10 +75,13 @@ var PixelPusher = function(options) {
         params.pixelpusher.myPort           = 9761;
       }
 
-      if (message.length >= 64) {
+      if (message.length >= 62) {
         params.pixelpusher.stripFlags       = message.slice(54, 62).toString('hex').match(/.{2}/g)
                                                      .map(function(x) { return parseInt(x, 16); });
-        params.pixelpusher.pusherFlags      =   message.readInt16LE(62);
+      }
+
+      if (message.length >= 66) {
+        params.pixelpusher.pusherFlags      =   message.readInt32LE(62);
       }
     }
 
