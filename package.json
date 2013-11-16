@@ -1,6 +1,6 @@
 {
   "name"           : "pixelpusher"
-, "version"        : "0.0.1"
+, "version"        : "0.1.0"
 , "description"    : "node.js module for the Heroic Robotics' Pixel Pusher LED controller"
 , "author"         : {
     "name"         : "Marshall Rose"
