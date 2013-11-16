@@ -5,7 +5,10 @@ new PixelPusher().on('discover', function(controller) {
   console.log('discovery: ' + JSON.stringify(controller.params.pixelpusher));
 
   controller.on('update', function() {
-    console.log('update: ' + JSON.stringify(this.params.pixelpusher));
+    console.log ({ updatePeriod  : this.params.pixelpusher.updatePeriod
+                 , deltaSequence : this.params.pixelpusher.deltaSequence
+                 , powerTotal    : this.params.pixelpusher.powerTotal
+                 });
   });
 
   var n = 0;
@@ -24,7 +27,7 @@ new PixelPusher().on('discover', function(controller) {
    
     controller.refresh(strips);
     n++;
-  }, 100);
+  }, 500);
 }).on('error', function(err) {
   console.log('oops: ' + err.message);
 });

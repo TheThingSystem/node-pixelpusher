@@ -24,7 +24,7 @@ var PixelPusher = function(options) {
   self.controllers = {};
 
   dgram.createSocket('udp4').on('message', function(message, rinfo) {
-    var controller, cycleTime, mac, params;
+    var controller, cycleTime, delta, mac, params;
 
     if (message.length < 48) return self.logger.debug('message too short (' + message.length + ' octets)', rinfo);
 
@@ -34,9 +34,11 @@ var PixelPusher = function(options) {
       if (controller.params.deviceType !== 2) return;
 
       cycleTime = message.readUInt32LE(28) / 1000;
+      delta = message.readUInt32LE(36);
+      if (delta > 5) cycleTime += 5; else if ((delta === 0) && (cycleTime > 1)) cycleTime -= 1;
       controller.params.pixelpusher.updatePeriod = cycleTime;
       controller.params.pixelpusher.powerTotal = message.readUInt32LE(32);
-      controller.params.pixelpusher.deltaSequence = message.readUInt32LE(36);
+      controller.params.pixelpusher.deltaSequence = delta;
       controller.lastUpdated = new Date().getTime();
       controller.nextUpdate = controller.lastUpdated + cycleTime;
       if (controller.timer) {

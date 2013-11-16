@@ -22,7 +22,10 @@ API
       // inspect controller.params and controller.params.pixelpusher...
 
       controller.on('update', function() {
-        // inspect controller.params.pixelpusher...
+        console.log ({ updatePeriod  : this.params.pixelpusher.updatePeriod
+                     , deltaSequence : this.params.pixelpusher.deltaSequence
+                     , powerTotal    : this.params.pixelpusher.powerTotal
+                     });
       });
 
       // every 1/2-second change the colors
@@ -60,8 +63,8 @@ API
       // indicates that the actual number of pixels is pixelsPerStrip/3,
       // each pixel is encoded as 9 octets
       //     first three octets are R, G, and B
-      //     next three octets is the orange value expressed as a 24-bit LE-encoded value
-      //     next three octets is the white  value expressed as a 24-bit LE-encoded value
+      //     next three octets is the orange value (three times)
+      //     next three octets is the white  value (three times)
 
     } else if (strip[x].flags & 0x2) { // wide pixels
 
