@@ -41,7 +41,7 @@ var PixelPusher = function(options) {
       controller.params.pixelpusher.deltaSequence = delta;
       controller.lastUpdated = new Date().getTime();
       controller.nextUpdate = controller.lastUpdated + cycleTime;
-      if (controller.timer) {
+      if (!!controller.timer) {
         clearTimeout(controller.timer);
         controller.sync(controller);
       }
@@ -100,6 +100,22 @@ var PixelPusher = function(options) {
     self.logger.error('PixelPusher error', err);
     self.emit('error', err);
   }).bind(7331);
+
+  setInterval(function() {
+    var controller, mac, now;
+
+    now = new Date().getTime();
+    for (mac in self.controllers) {
+      if (!self.controllers.hasOwnProperty(mac)) continue;
+      controller = self.controllers[mac];
+
+      if ((controller.lastUpdated + (3 * 1000)) >= now) continue;
+
+      controller.emit('timeout');
+      if (!!controller.timer) clearTimeout(controller.timer);
+      delete(self.controllers[mac]);
+    }
+  }, 1000);
 };
 util.inherits(PixelPusher, Emitter);
 

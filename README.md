@@ -19,6 +19,8 @@ API
 ### Discover
 
     var pp = new PixelPusher().on('discover', function(controller) {
+      var timer = null;
+
       // inspect controller.params and controller.params.pixelpusher...
 
       controller.on('update', function() {
@@ -26,10 +28,14 @@ API
                      , deltaSequence : this.params.pixelpusher.deltaSequence
                      , powerTotal    : this.params.pixelpusher.powerTotal
                      });
+      }).on('timeout', function() {
+        console.log('controller ' + controller.params.ipAddress + ' (' + controller.params.macAddress + '): timeout');
+
+        if (!!timer) clearInterval(timer);
       });
 
       // every 1/2-second change the colors
-      setInterval(function() { refresh(controller); }, 500);
+      timer = setInterval(function() { refresh(controller); }, 500);
     }).on('error', function(err) {
       console.log('oops: ' + err.message);
     });

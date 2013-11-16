@@ -2,6 +2,8 @@ var PixelPusher = require('./pixelpusher')
   ;
 
 new PixelPusher().on('discover', function(controller) {
+  var timer = null;
+
   console.log('discovery: ' + JSON.stringify(controller.params.pixelpusher));
 
   controller.on('update', function() {
@@ -9,10 +11,14 @@ new PixelPusher().on('discover', function(controller) {
                  , deltaSequence : this.params.pixelpusher.deltaSequence
                  , powerTotal    : this.params.pixelpusher.powerTotal
                  });
+  }).on('timeout', function() {
+    console.log('controller ' + controller.params.ipAddress + ' (' + controller.params.macAddress + '): timeout');
+
+    if (!!timer) clearInterval(timer);
   });
 
   var n = 0;
-  setInterval(function() {
+  timer = setInterval(function() {
     var i, strips, x;
 
     strips = [];
