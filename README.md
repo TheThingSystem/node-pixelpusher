@@ -75,7 +75,7 @@ API
     } else if (strip[x].flags & 0x2) { // wide pixels
 
       // indicates that the actual number of pixels is pixelsPerStrip/2,
-      // each pixel is encoded as 6 octets: R, G, and B (use writeUInt16LE for each)
+      // each pixel is encoded as 6 octets: R >> 8, G >> 8, B >> 8, R & 0xff, G & 0xff, B & 0xff
 
     } else {
 
