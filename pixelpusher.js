@@ -35,7 +35,10 @@ var PixelPusher = function(options) {
 
       cycleTime = message.readUInt32LE(28) / 1000;
       delta = message.readUInt32LE(36);
-      if (delta > 5) cycleTime += 5; else if ((delta === 0) && (cycleTime > 1)) cycleTime -= 1;
+      if (delta > 5) {
+        cycleTime += 5; 
+        controller.trim(controller);
+      } else if ((delta === 0) && (cycleTime > 1)) cycleTime -= 1;
       controller.params.pixelpusher.updatePeriod = cycleTime;
       controller.params.pixelpusher.powerTotal = message.readUInt32LE(32);
       controller.params.pixelpusher.deltaSequence = delta;
@@ -109,7 +112,7 @@ var PixelPusher = function(options) {
       if (!self.controllers.hasOwnProperty(mac)) continue;
       controller = self.controllers[mac];
 
-      if ((controller.lastUpdated + (3 * 1000)) >= now) continue;
+      if ((controller.lastUpdated + (5 * 1000)) >= now) continue;
 
       controller.emit('timeout');
       if (!!controller.timer) clearTimeout(controller.timer);
@@ -137,7 +140,7 @@ var Controller = function(params) {
 util.inherits(Controller, Emitter);
 
 Controller.prototype.refresh = function(strips) {
-  var i, m, n, offset, packet, self;
+  var i, m, n, numbers, offset, packet, self;
 
   self = this;
 
@@ -154,17 +157,20 @@ Controller.prototype.refresh = function(strips) {
       offset = 0;
       packet.writeUInt32LE(++self.sequenceNo, offset);
       offset += 4;
+
+      numbers = [];
     }
+    numbers.push(strips[i].number);
     packet.writeUInt8(strips[i].number, offset++);
     strips[i].data.copy(packet, offset);
     offset += strips[i].data.length;
 
     if ((++i % self.params.stripsPerPkt) === 0) {
-      self.messages.push({ sequenceNo: self.sequenceNo, packet: packet });
+      self.messages.push({ sequenceNo: self.sequenceNo, packet: packet, numbers: numbers });
       packet = null;
     }
   }
-  if (!!packet) self.messages.push({ sequenceNo: self.sequenceNo, packet: packet });
+  if (!!packet) self.messages.push({ sequenceNo: self.sequenceNo, packet: packet, numbers: numbers });
 
   if ((self.timer === null) && (self.messages.length > 0)) self.sync(self);
 };
@@ -188,6 +194,26 @@ Controller.prototype.sync = function(self) {
   self.timer = setTimeout(function() { self.sync(self); }, self.params.pixelpusher.updatePeriod);
 };
 
+Controller.prototype.trim = function(self) {
+  var f, i, j, messages, numbers, x;
+
+  if (self.messages.length < 2) return;
+
+  f = function(j) {
+    return function() { return numbers.filter(function(n) { return (self.messages[j].numbers.indexOf(n) !== -1); }); };
+  };
+
+  messages = [];
+  for (i = 0; i < self.messages.length; i++) {
+    numbers = self.messages[i].numbers;
+    for (j = i + 1; j < self.messages.length; j++) {
+      x = f(j);
+      if (x.length > 0) break;
+    }
+    if (j === self.messages.length) messages.push(self.messages[i]);
+  }
+  self.messages = messages;
+};
 
 module.exports = PixelPusher;
 
