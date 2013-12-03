@@ -48,7 +48,7 @@ var PixelPusher = function(options) {
         clearTimeout(controller.timer);
         controller.sync(controller);
       }
-      return controller.emit('update', controller);
+      return controller.emit('update');
     }
 
     params = { macAddress   : mac

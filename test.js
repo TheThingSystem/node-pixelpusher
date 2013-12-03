@@ -4,7 +4,7 @@ var PixelPusher = require('./pixelpusher')
 new PixelPusher().on('discover', function(controller) {
   var timer = null;
 
-  console.log('discovery: ' + JSON.stringify(controller.params.pixelpusher));
+  console.log('discover: ' + JSON.stringify(controller.params.pixelpusher));
 
   controller.on('update', function() {
     console.log ({ updatePeriod  : this.params.pixelpusher.updatePeriod
