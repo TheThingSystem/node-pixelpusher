@@ -1,8 +1,9 @@
 // pixelpusher.js -- see the include file below courtesy of Jas Strong
 
-var dgram   = require('dgram')
-  , Emitter = require('events').EventEmitter
-  , util    = require('util')
+var buffertools = require('buffertools')
+  , dgram       = require('dgram')
+  , Emitter     = require('events').EventEmitter
+  , util        = require('util')
   ;
 
 
@@ -123,6 +124,8 @@ var PixelPusher = function(options) {
 util.inherits(PixelPusher, Emitter);
 
 var Controller = function(params) {
+  var i;
+
   var self = this;
 
   if (!(self instanceof Controller)) return new Controller(params);
@@ -136,13 +139,31 @@ var Controller = function(params) {
   self.sequenceNo = 0;
   self.messages = [];
   self.timer = null;
+
+  self.strips = [];
+  for (i = 0; i < self.params.pixelpusher.numberStrips; i++) self.strips.push(new Buffer(0));
 };
 util.inherits(Controller, Emitter);
 
 Controller.prototype.refresh = function(strips) {
-  var i, m, n, numbers, offset, packet, self;
+  var i, m, n, numbers, offset, packet, self, updates;
 
   self = this;
+
+// 0.1.1: do not update strips that haven't changed...
+  updates = [];
+  for (i = 0; i < strips.length; i++) {
+    n = strips[i].number;
+    if ((n < 0) || (n >= self.params.pixelpusher.pixelsPerStrip)) {
+      throw new Error('strips must be numbered from 1..' + self.params.pixelpusher.pixelsPerStrip);
+    }
+
+    if (buffertools.equals(strips[i].data, self.strips[n])) continue;
+    if (strips[i].data.length !== self.strips[n].length) self.strips[n] = new Buffer(strips[i].data.length);
+    strips[i].data.copy(self.strips[n]);
+    updates.push(strips[i]);
+  }
+  strips = updates;
 
   packet = null;
   for (i = 0; i < strips.length; ) {
